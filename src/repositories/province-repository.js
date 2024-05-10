@@ -47,6 +47,7 @@ getAllAsync = async () => {
 return provinciasArray;
     }
 getByIdAsync = async (id) => {
+    const ID = ValidacionesHelper.getFloatOrDefault(id, 0);
     for (let i = 0; i <= provinciasArray.provinciasArray.length; i++) {
             if (provinciasArray.provinciasArray[i].id == ID) {
                 console.log("hola");
