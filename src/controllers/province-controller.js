@@ -5,7 +5,7 @@ import ValidacionesHelper from "../helpers/validaciones-helper.js"
 const ProvinceRouter =  Router();
 const svc = new ProvinceService();
   
-ProvinceRouter.get('' , async (req, res) =>{
+ProvinceRouter.get('/' , async (req, res) =>{
     let respuesta;
     const provinciasArray = await svc.getAllAsync();
     if (provinciasArray != null){
@@ -17,84 +17,68 @@ ProvinceRouter.get('' , async (req, res) =>{
 });
 
 ProvinceRouter.get("/:id" , async (req, res) => {
-    let respuesta;
-    const id = req.params.id;
-    if (ValidacionesHelper.getIntegerOrDefault(id, 0) > 0) {
-      const provinciasArray = await svc.getByIdAsync(id);
-      if (provinciasArray != null) {
-        respuesta = res.status(200).json(provinciasArray);
+  const { id } = req.params;
+  try {
+      const locations = await svc.getByIdAsync(id);
+      if (locations) {
+          res.status(200).json(locations);
       } else {
-        respuesta = res.status(500).send(`Error interno.`);
+          res.status(404).json({ message: "El id enviado no existe" });
       }
-    } else {
-      respuesta = res.status(400).send(`Error en la solicitud.`);
-    }
-    return respuesta;
+  } catch (error) {
+      res.status(500).json({ message: error.message });
+  }
 });
 
-ProvinceRouter.post("", async (req, res) => 
+ProvinceRouter.post("/", async (req, res) => 
 {
-    let respuesta;
-    const entity = req.body;
-    console.log(entity.name);
-    if (entity != null) {
-      const provinciasArray = await svc.createAsync(entity);
-      if (provinciasArray != null) {
-        respuesta = res.status(200).json(provinciasArray);
-      } else {
-        respuesta = res.status(500).send(`Error interno.`);
-      }
-    } else {
-      respuesta = res.status(400).send(`Error en la solicitud.`);
+    //haciendo decuenta que el id se pasa por body
+    const {id, nombre, nombreCompleto, latitud, longitud, ordenVisualizacion}=req.body
+    try {
+        if (nombre==null || nombre.length<3){
+            respuesta = res.status(400).send(`El nombre ingresado esta vacío o tiene menos de tres letras`);
+        }
+        else{
+        const newProvince = await createProvince({ id, nombre, nombreCompleto, latitud, longitud, ordenVisualizacion});
+        res.status(201).json(newEvent);
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
-    return respuesta;
 });
-
-ProvinceRouter.put("/api/province", (req, res) => 
-{
-    const { id, nombre, nombreCompleto, latitud, longitud, ordenVisualizacion } = req.body;
-    const Nombre = ValidacionesHelper.getStringOrDefault(nombre, 'Invitado');
-    const NombreCompleto = ValidacionesHelper.getStringOrDefault(nombreCompleto, 'Invitado');
-    const Latitud = ValidacionesHelper.getFloatOrDefault(latitud, 0);
-    const Longitud = ValidacionesHelper.getFloatOrDefault(longitud, 0);
-    const OrdenVisualizacion = ValidacionesHelper.getFloatOrDefault(ordenVisualizacion, 0);
-    const ID = ValidacionesHelper.getFloatOrDefault(id, 0);
-    if (!Nombre || Nombre.length < 3) {
-        return res.status(400).send("El nombre de la provincia debe tener al menos 3 caracteres.");
-    }
-    let provinciaEncontrada = false;
-    for (let i = 0; i <= arrayProvincias.arrayProvincias.length; i++) {
-        if (arrayProvincias.arrayProvincias[i].id == ID) {
-            arrayProvincias.arrayProvincias[i].nombre = Nombre;
-            arrayProvincias.arrayProvincias[i].nombreCompleto = NombreCompleto;
-            provinciaEncontrada = true;
-            res.status(201).send("Modificado");
-        } 
-        if (!provinciaEncontrada) {
-            return res.status(404).send("No se encontró ninguna provincia con ese ID.");
-        }
-    }
-})
-
-ProvinceRouter.delete("/api/province/:id", (req, res) => {
-    const id = req.params.id;
-    let index = -1;
-    for (let i = 0; i <= arrayProvincias.arrayProvincias.length; i++) {
-        if (arrayProvincias.arrayProvincias[i].id == id) {
-            index = i;
-            if (index !== -1) {
-      
-                arrayProvincias.arrayProvincias.splice(index, 1);
-                res.status(200).json({ message: "Provincia eliminada correctamente" });
-            } 
-        }
-        else {
-            res.status(404).send("Provincia no encontrada" );
-        } 
-        }       
-       
-
-})
-
-
+   ProvinceRouter.put('/', async (req, res) => {
+        const {id, nombre, nombreCompleto, latitud, longitud, ordenVisualizacion}=req.body
+            try {
+                const provincia = await svc.getByIdAsync(id);
+                if (provincia.id !== id) { 
+                    res.status(404).send('No existe una provincia con el id ingresado');
+                    return;
+                }
+                else if (nombre==null || nombre.length<3){
+                    respuesta = res.status(400).send(`El nombre ingresado esta vacío o tiene menos de tres letras`);
+                }
+                else {
+                    const newProvince = await svc.updateProvince({id, nombre, nombreCompleto, latitud, longitud, ordenVisualizacion});
+                    return res.status(200).json(newProvince);
+                }
+            }catch (error) {
+                res.status(500).json({ message: error.message });
+            }
+        });
+    ProvinceRouter.delete("/:id",async (req, res) => {
+            const id = req.params.id;
+            try {
+                const provincia = await svc.getByIdAsync(id);
+                if (provincia.id !== id) { 
+                    res.status(404).send('No existe una provincia con el id ingresado');
+                    return;
+                }
+                else {
+                    await svc.deleteProvince({id});
+                    return res.status(200).json({ message: 'Evento eliminado correctamente.'});
+                }
+            }catch (error) {
+                res.status(500).json({ message: error.message });
+            }
+});
 export default ProvinceRouter

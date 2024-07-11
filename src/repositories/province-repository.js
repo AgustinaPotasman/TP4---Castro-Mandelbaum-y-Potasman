@@ -1,62 +1,60 @@
 import pkg from 'pg'
 const { Client, Pool } = pkg;
 export default class ProvinceRepository {
-getAllAsync = async () => {
-    const provinciasArray = [
-        {
-            id: 1,
-            nombre: "BS",
-            nombreCompleto: "Buenos Aires",
-            latitud: -34.603722,
-            longitud: -58.381592,
-            ordenVisualizacion: 1
-        },
-        {
-            id: 2,
-            nombre: "CABA",
-            nombreCompleto: "Ciudad Autónoma de Buenos Aires",
-            latitud: -34.603722,
-            longitud: -58.381592,
-            ordenVisualizacion: 2
-        },
-        {
-            id: 3,
-            nombre: "CAT",
-            nombreCompleto: "Catamarca",
-            latitud: -28.469581,
-            longitud: -65.784356,
-            ordenVisualizacion: 3
-        },
-        {
-            id: 4,
-            nombre: "CHA",
-            nombreCompleto: "Chaco",
-            latitud: -26.332202,
-            longitud: -60.221123,
-            ordenVisualizacion: 4
-        },
-        {
-            id: 5,
-            nombre: "CHU",
-            nombreCompleto: "Chubut",
-            latitud: -43.293168,
-            longitud: -65.102280,
-            ordenVisualizacion: 5
-        },
-    ];
-return provinciasArray;
+    async getAllAsync() {
+        const client = await this.pool.connect();
+        try {
+            const result = await client.query('SELECT * FROM province');
+            return result.rows;
+        } catch (error) {
+            console.error(error);
+        } finally {
+            client.release();
+        }
     }
-getByIdAsync = async (id) => {
-    const ID = ValidacionesHelper.getFloatOrDefault(id, 0);
-    for (let i = 0; i <= provinciasArray.provinciasArray.length; i++) {
-            if (provinciasArray.provinciasArray[i].id == ID) {
-                console.log("hola");
-                return provinciasArray.provinciasArray[i];
-            }
+    async getByIdAsync(id) {
+        const client = await this.pool.connect();
+        try {
+            const result = await client.query('SELECT * FROM province WHERE id = $1', [id]);
+            return result.rows[0];
+        } catch (error) {
+            console.error(error);
+        } finally {
+            client.release();
+        }
     }
+    createProvince = async (eventData) => {
+        const { id, nombre, nombreCompleto, latitud, longitud, ordenVisualizacion} = eventData;
+        const client = await pool.connect();
+        try {
+            const res = await client.query(
+                'INSERT INTO province (id, nombre, nombreCompleto, latitud, longitud, ordenVisualizacion) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+                [id, nombre, nombreCompleto, latitud, longitud, ordenVisualizacion]
+            );
+            return res.rows[0];
+        } finally {
+            client.release();
+        }
+    };
+    updateProvince = async (eventData) => {
+        const { id, nombre, nombreCompleto, latitud, longitud, ordenVisualizacion} = eventData;
+        const client = await pool.connect();
+        try {
+            const res = await client.query(
+                'UPDATE province SET nombre = $1, nombreCompleto = $2, latitud = $3, longitud = $4, ordenVisualizacion = $5 WHERE id = $6 RETURNING *',
+                [nombre, nombreCompleto, latitud, longitud, ordenVisualizacion, id]
+            );
+            return res.rows[0];
+        } finally {
+            client.release();
+        }
+    };
+    deleteProvince = async (id) => {
+        const client = await pool.connect();
+        try {
+            await client.query('DELETE FROM province WHERE id = $1', [id]);
+        } finally {
+            client.release();
+        }
     };
 }
-createAsync = async (entity) => {
-}
-updateAsync = async (entity) => {}
-deleteByIdAsync = async (id) => {}
